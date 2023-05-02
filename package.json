@@ -46,6 +46,5 @@
   "bugs": {
     "url": "https://github.com/FableVision/phaser-multi-scene-lib/issues"
   },
-  "homepage": "https://github.com/FableVision/phaser-multi-scene-lib#readme",
-  "private": true
+  "homepage": "https://github.com/FableVision/phaser-multi-scene-lib#readme"
 }
