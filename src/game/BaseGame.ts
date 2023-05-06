@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 // Include Spine!
 import 'phaser/plugins/spine/dist/SpinePlugin.js';
 import { AudioManager } from '../audio';
-import { BaseGlobalHud } from './GlobalHud';
+import { BaseGlobalHud } from './BaseGlobalHud';
 import { BaseScene } from '../activity';
 import { InteractionManager, Keyboard } from '@fablevision/interaction';
 import { PhaserHandler } from '@fablevision/interaction/dist/phaser';

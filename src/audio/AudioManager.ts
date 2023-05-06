@@ -1,13 +1,10 @@
 import Phaser from 'phaser';
 
-// TEMPLATE-ONLY This should be replaced with some sort of static map of ids to urls
-const SFX = {} as {foo: string[]};
-
 export type Sound = Phaser.Sound.WebAudioSound;
 
 export class AudioManager
 {
-    public globalSfx: Map<keyof typeof SFX, Sound>;
+    public globalSfx: Map<string, Sound>;
     private currentVOClip: Sound|null;
     private currentVOClips: Sound[]|null;
     private _sfxMuted: boolean;
@@ -36,19 +33,21 @@ export class AudioManager
         this.globalSfx = new Map();
     }
 
-    public preloadGlobalSfx(scene: Phaser.Scene)
+    public preloadGlobalSfx(scene: Phaser.Scene, sfx: Record<string, string[]>)
     {
-        for (const name in SFX)
+        for (const name in sfx)
         {
-            scene.load.audio(name, SFX[name as keyof typeof SFX]);
+            // put in a null value so that we can
+            this.globalSfx.set(name, null as any);
+            scene.load.audio(name, sfx[name]);
         }
     }
 
     public createGlobalSfx(scene: Phaser.Scene)
     {
-        for (const name in SFX)
+        for (const name in this.globalSfx)
         {
-            this.globalSfx.set(name as keyof typeof SFX, scene.sound.add(name, {volume: 0.5}) as Sound);
+            this.globalSfx.set(name, scene.sound.add(name, {volume: 0.5}) as Sound);
         }
     }
 
