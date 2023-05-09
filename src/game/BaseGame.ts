@@ -7,8 +7,6 @@ import { BaseScene } from '../activity';
 import { InteractionManager, Keyboard } from '@fablevision/interaction';
 import { PhaserHandler } from '@fablevision/interaction/dist/phaser';
 
-import '../main.css';
-
 export type SceneConstructor<S, A> = new (config: string|Phaser.Types.Scenes.SettingsConfig) => BaseScene<S, A>;
 
 const ACTIVITY_KEY = 'activity';
@@ -42,6 +40,7 @@ export class BaseGame<S, A> extends Phaser.Game
             height: number,
             baseTitle?: string,
             hudConstructor: new () => BaseGlobalHud<any>,
+            uiDiv: string|HTMLDivElement,
         })
     {
         super(Object.assign({
@@ -71,7 +70,8 @@ export class BaseGame<S, A> extends Phaser.Game
 
         this.audioManager = new AudioManager();
 
-        this.uiDiv = document.getElementById('ui') as HTMLDivElement;
+        const ui = phaserParams.uiDiv;
+        this.uiDiv = typeof ui == 'string' ? document.getElementById(ui) as HTMLDivElement : ui;
         this.keyboard = new Keyboard();
         this.interaction = new InteractionManager({
             renderer: new PhaserHandler(this),
@@ -132,7 +132,7 @@ export class BaseGame<S, A> extends Phaser.Game
         scene.events.once('loaded', () =>
         {
             // activate hud if desireable
-            this.globalHud.showHud((scene.staticConfig as any).hud);
+            this.globalHud.showHud((scene.staticConfig as any)?.hud);
             this.restoreFocusBaseline();
             this.scene.moveAbove<Phaser.Scene>(scene, this.globalHud);
             this.resize();
@@ -151,7 +151,7 @@ export class BaseGame<S, A> extends Phaser.Game
     /**
      * Shows/hides all of or a portion of the global hud.
      */
-    public showHud<H>(config: boolean|H): void
+    public showHud(config: any): void
     {
         this.globalHud.showHud(config);
     }
@@ -193,13 +193,7 @@ export class BaseGame<S, A> extends Phaser.Game
         }
     }
 
-    /** Return to the main menu. */
-    public goToMainMenu(): Promise<void>
-    {
-        return this.goToActivity('main-menu');
-    }
-
-    /** Exit the current activity, returning to whence the user game. */
+    /** Exit the current activity, potentially returning to whence the user came. */
     public async exitActivity(): Promise<void>
     {
         if (this.navigating) return;
@@ -209,7 +203,6 @@ export class BaseGame<S, A> extends Phaser.Game
     protected async endCurrentActivity(): Promise<void>
     {
         this.navigating = true;
-        // this.activityHud.deactivate();
         await this.showLoader();
         if (this._currentActivity)
         {
