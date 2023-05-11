@@ -45,7 +45,7 @@ export class AudioManager
 
     public createGlobalSfx(scene: Phaser.Scene)
     {
-        for (const name in this.globalSfx)
+        for (const [name] of this.globalSfx)
         {
             this.globalSfx.set(name, scene.sound.add(name, {volume: 0.5}) as Sound);
         }
