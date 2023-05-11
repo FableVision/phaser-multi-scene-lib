@@ -220,10 +220,10 @@ export class BaseGame<S, A> extends Phaser.Game
     /**
      * Go to an activity, finding metadata and default args
      */
-    public async goToActivity(activityId: string): Promise<void>
+    public async goToActivity(activityId: string, args?: A): Promise<void>
     {
         if (this.navigating) return;
-        return this.goToActivityWithArgs(activityId, {} as any);
+        return this.goToActivityWithArgs(activityId, args ?? {} as any);
     }
 
     protected async goToActivityWithArgs(activityId: string, args: A): Promise<void>
