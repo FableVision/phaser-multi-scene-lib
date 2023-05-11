@@ -32,11 +32,6 @@ export class BaseScene<S, A> extends Phaser.Scene
     /** This can be overridden by specific games for stronger typing */
     public dialogueData!: {[key:string]: BaseDialogueData};
     public captionHandler!: CaptionHandler|null;
-    /**
-     * Override the home button's default behavior of returning to the main menu. When at the root
-     * level of your activity, this should be returned to null so that players can leave the activity.
-     */
-    public homeButtonCallback!: (() => void)|null;
 
     /**
      * This method is called by the game before the scene gets to load - it is where you would do any
@@ -48,7 +43,6 @@ export class BaseScene<S, A> extends Phaser.Scene
         this.staticConfig = staticConfig;
         this.args = args;
         this.captionHandler = null;
-        this.homeButtonCallback = null;
 
         this.cleanup = new DisposableGroup();
     }

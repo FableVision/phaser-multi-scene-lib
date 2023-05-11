@@ -3,13 +3,13 @@ import Phaser from 'phaser';
 import 'phaser/plugins/spine/dist/SpinePlugin.js';
 import { AudioManager } from '../audio';
 import { BaseGlobalHud } from './BaseGlobalHud';
-import { BaseScene } from '../activity';
+import { BaseScene } from '../scene';
 import { InteractionManager, Keyboard } from '@fablevision/interaction';
 import { PhaserHandler } from '@fablevision/interaction/dist/phaser';
 
 export type SceneConstructor<S, A> = new (config: string|Phaser.Types.Scenes.SettingsConfig) => BaseScene<S, A>;
 
-const ACTIVITY_KEY = 'activity';
+const SCENE_KEY = '__current_scene__';
 
 export class BaseGame<S, A> extends Phaser.Game
 {
@@ -19,7 +19,7 @@ export class BaseGame<S, A> extends Phaser.Game
     public globalScale: number;
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    protected _currentActivity: BaseScene<S, A>|null;
+    protected _currentScene: BaseScene<S, A>|null;
     protected globalHud: BaseGlobalHud<any>;
     private uiDiv: HTMLDivElement;
 
@@ -29,9 +29,9 @@ export class BaseGame<S, A> extends Phaser.Game
     private designHeight: number;
     private baseTitle: string;
 
-    public get currentActivity(): BaseScene<S, A>
+    public get currentScene(): BaseScene<S, A>
     {
-        return this._currentActivity!;
+        return this._currentScene!;
     }
 
     constructor(phaserParams: Phaser.Types.Core.GameConfig &
@@ -66,7 +66,7 @@ export class BaseGame<S, A> extends Phaser.Game
 
         this.globalScale = 1;
         this.navigating = false;
-        this._currentActivity = null;
+        this._currentScene = null;
 
         this.audioManager = new AudioManager();
 
@@ -116,13 +116,13 @@ export class BaseGame<S, A> extends Phaser.Game
         await this.globalHud.loaded.promise;
         const state = await stateProm;
 
-        this.startActivity(ACTIVITY_KEY, state, staticConfig, args);
+        this.startActivity(SCENE_KEY, state, staticConfig, args);
     }
 
     protected async startActivity(name:string, state: SceneConstructor<S, A>, staticConfig: S, args?: A): Promise<void>
     {
         this.scene.add(name, state);
-        const scene = this._currentActivity = this.scene.getScene(name) as BaseScene<S, A>;
+        const scene = this._currentScene = this.scene.getScene(name) as BaseScene<S, A>;
         // allow loading content with an async initialize
         await scene.initialize(staticConfig, args || {} as any);
         this.updateTitle();
@@ -157,18 +157,18 @@ export class BaseGame<S, A> extends Phaser.Game
     }
 
     /**
-     * Shows the loader, attaches listeners to know when the current activity's load makes progress and finishes
+     * Shows the loader, attaches listeners to know when the current scene's load makes progress and finishes
      * and then resolves when the loader has been hidden.
      */
     public runLoader(): [loaded: Promise<void>, visible: Promise<void>]
     {
         const shown = this.showLoader();
         const progress = (p: number) => this.globalHud.updateProgress(p);
-        this._currentActivity!.load.on('progress', progress);
+        this._currentScene!.load.on('progress', progress);
         const complete = new Promise<void>(resolve =>
         {
-            this._currentActivity!.load.once('complete', resolve);
-            this._currentActivity!.load.off('progress', progress);
+            this._currentScene!.load.once('complete', resolve);
+            this._currentScene!.load.off('progress', progress);
         });
         const shownAndLoaded = Promise.all([complete, shown]);
         return [shownAndLoaded as any, shownAndLoaded.then(() => this.hideLoader())];
@@ -182,7 +182,7 @@ export class BaseGame<S, A> extends Phaser.Game
 
     protected updateTitle(): void
     {
-        const name = (this._currentActivity!.staticConfig as any)?.title;
+        const name = (this._currentScene!.staticConfig as any)?.title;
         if (name)
         {
             document.title = `${this.baseTitle ? this.baseTitle + ': ' : ''}${name}`;
@@ -193,7 +193,7 @@ export class BaseGame<S, A> extends Phaser.Game
         }
     }
 
-    /** Exit the current activity, potentially returning to whence the user came. */
+    /** Exit the current scene, potentially returning to whence the user came. */
     public async exitActivity(): Promise<void>
     {
         if (this.navigating) return;
@@ -204,12 +204,12 @@ export class BaseGame<S, A> extends Phaser.Game
     {
         this.navigating = true;
         await this.showLoader();
-        if (this._currentActivity)
+        if (this._currentScene)
         {
-            await this._currentActivity.asyncShutdown();
-            this._currentActivity.shutdown();
-            this.scene.remove(ACTIVITY_KEY);
-            this._currentActivity = null;
+            await this._currentScene.asyncShutdown();
+            this._currentScene.shutdown();
+            this.scene.remove(SCENE_KEY);
+            this._currentScene = null;
         }
         // reset InteractionManager and keyboard
         this.interaction.reset();
@@ -218,26 +218,26 @@ export class BaseGame<S, A> extends Phaser.Game
     }
 
     /**
-     * Go to an activity, finding metadata and default args
+     * Go to a scene, finding metadata and default args
      */
-    public async goToActivity(activityId: string, args?: A): Promise<void>
+    public async goToScene(id: string, args?: A): Promise<void>
     {
         if (this.navigating) return;
-        return this.goToActivityWithArgs(activityId, args ?? {} as any);
+        return this.goToSceneWithArgs(id, args ?? {} as any);
     }
 
-    protected async goToActivityWithArgs(activityId: string, args: A): Promise<void>
+    protected async goToSceneWithArgs(id: string, args: A): Promise<void>
     {
         if (this.navigating) return;
         await this.endCurrentActivity();
 
-        const metadata = this.getStaticConfig(activityId);
+        const metadata = this.getStaticConfig(id);
         if (!metadata)
         {
-            console.error('Unable to go to unknown activity: ', activityId);
+            console.error('Unable to go to unknown scene: ', id);
             return;
         }
-        this.loadAndStart(this.getSceneConstructor(activityId), metadata, args);
+        this.loadAndStart(this.getSceneConstructor(id), metadata, args);
     }
 
     /**
@@ -260,9 +260,9 @@ export class BaseGame<S, A> extends Phaser.Game
 
     public setActivityPaused(paused: boolean): void
     {
-        if (this._currentActivity)
+        if (this._currentScene)
         {
-            this._currentActivity.time.paused = paused;
+            this._currentScene.time.paused = paused;
             this.audioManager.setVOPaused(paused);
         }
     }
@@ -296,6 +296,6 @@ export class BaseGame<S, A> extends Phaser.Game
 
         this.globalHud.resize(layoutWidth, layoutHeight, scale);
 
-        this._currentActivity?.resize();
+        this._currentScene?.resize();
     }
 }

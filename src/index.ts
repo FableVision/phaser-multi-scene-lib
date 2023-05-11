@@ -1,7 +1,7 @@
 /// <reference path='../node_modules/phaser/types/SpineGameObject.d.ts' />
 /// <reference path='../node_modules/phaser/types/SpinePlugin.d.ts' />
 
-export * from './activity';
+export * from './scene';
 export * from './game';
 export type { Sound } from './audio';
 
