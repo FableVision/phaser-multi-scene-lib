@@ -116,10 +116,10 @@ export class BaseGame<S, A> extends Phaser.Game
         await this.globalHud.loaded.promise;
         const state = await stateProm;
 
-        this.startActivity(SCENE_KEY, state, staticConfig, args);
+        this.startScene(SCENE_KEY, state, staticConfig, args);
     }
 
-    protected async startActivity(name:string, state: SceneConstructor<S, A>, staticConfig: S, args?: A): Promise<void>
+    protected async startScene(name:string, state: SceneConstructor<S, A>, staticConfig: S, args?: A): Promise<void>
     {
         this.scene.add(name, state);
         const scene = this._currentScene = this.scene.getScene(name) as BaseScene<S, A>;
@@ -194,13 +194,13 @@ export class BaseGame<S, A> extends Phaser.Game
     }
 
     /** Exit the current scene, potentially returning to whence the user came. */
-    public async exitActivity(): Promise<void>
+    public async exitScene(): Promise<void>
     {
         if (this.navigating) return;
-        await this.endCurrentActivity();
+        await this.endCurrentScene();
     }
 
-    protected async endCurrentActivity(): Promise<void>
+    protected async endCurrentScene(): Promise<void>
     {
         this.navigating = true;
         await this.showLoader();
@@ -229,7 +229,7 @@ export class BaseGame<S, A> extends Phaser.Game
     protected async goToSceneWithArgs(id: string, args: A): Promise<void>
     {
         if (this.navigating) return;
-        await this.endCurrentActivity();
+        await this.endCurrentScene();
 
         const metadata = this.getStaticConfig(id);
         if (!metadata)
@@ -258,7 +258,7 @@ export class BaseGame<S, A> extends Phaser.Game
         this.interaction.enabled = true;
     }
 
-    public setActivityPaused(paused: boolean): void
+    public setScenePaused(paused: boolean): void
     {
         if (this._currentScene)
         {
