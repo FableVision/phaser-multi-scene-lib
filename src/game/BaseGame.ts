@@ -77,6 +77,9 @@ export class BaseGame<S, A> extends Phaser.Game
             renderer: new PhaserHandler(this),
             accessibilityDiv: this.uiDiv,
         });
+        // prevent browser from attempting to scroll the accessibility div when things partially out of window are focused
+        // this behavior gets triggered by the lists with partially/fully off screen elements.
+        this.uiDiv.onscroll = () => this.uiDiv.scrollTo(0, 0);
 
         this.globalHud = new phaserParams.hudConstructor();
         this.scene.add('hud', this.globalHud, true);
