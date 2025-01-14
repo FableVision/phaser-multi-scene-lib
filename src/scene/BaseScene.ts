@@ -49,10 +49,11 @@ export class BaseScene<S, A> extends Phaser.Scene
 
     preload(): void
     {
-        // to be overridden
+        // should be called after load requests have been made
+        this.mLoad.load().then(() => this.mCreate());
     }
 
-    create(): void
+    mCreate(): void
     {
         // do a quick wait to try to let any promise based hooks to resolve
         promises.wait(1).then(() =>
