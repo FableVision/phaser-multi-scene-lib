@@ -91,6 +91,15 @@ export class ManagedLoader
         this.pendingLoad = true;
     }
 
+    public multiatlas(key: string, atlasJson: string|object, baseUrl?: string): void
+    {
+        if (this.scene.textures.exists(key)) return;
+        this.scene.load.multiatlas(key, atlasJson as any, baseUrl);
+        // const multiFile = this.scene.load.list.entries[this.scene.load.list.size - 1].multiFile;
+        this.loadedTypeByKey[key] = { type: 'image' };
+        this.pendingLoad = true;
+    }
+
     public image(key: string, url: string): void
     {
         if (this.scene.textures.exists(key)) return;
