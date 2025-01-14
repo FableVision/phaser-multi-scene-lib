@@ -217,6 +217,7 @@ export class AudioManager
             console.error('Cannot play audio clip', audio);
             return Promise.resolve();
         }
+        this.stopAllVOClips();
         this.currentVOClip = audio;
         audio.mute = this._voMuted || this._allMuted;
         return new Promise(resolve =>
